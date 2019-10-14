@@ -1,69 +1,74 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
- import React, {Component} from 'react';
- import { FlatList } from 'react-native';
- import ForecastCard from './components/ForecastCard';
+import React, {Component} from 'react';
+import Geolocation from '@react-native-community/geolocation';
+import { FlatList } from 'react-native';
+import ForecastCard from './components/ForecastCard';
 
 
- export default class App extends React.Component {
+export default class App extends React.Component {
 
- 	constructor(props){
- 		super(props);
+	constructor(props){
+		super(props);
 
- 		this.state = {
- 			latitude: 0,
- 			longitude: 0,
- 			forecast: [],
- 			error:''
- 		};
- 	}
+		this.state = {
+			latitude: 0,
+			longitude: 0,
+			forecast: [],
+			cityname = '',
+			error:''
+		};
+	}
 
- 	componentDidMount(){
- 		// Get the user's location
- 		this.getLocation();
- 	}
+	componentDidMount(){
+		// Get the user's location
+		// this.getLocation();
+		this.getWeatherInfo()
+	}
 
- 	getLocation(){
+	getLocation(){
+		Geolocation.getCurrentPosition(info => console.log(info));
+		// Get the current position of the user
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				this.setState(
+					(prevState) => ({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude
+					}), () => { this.getWeather(); }
+				);
+			},
+			(error) => this.setState({ forecast: error.message }),
+			{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+		);
+	}
 
- 		// Get the current position of the user
- 		navigator.geolocation.getCurrentPosition(
- 			(position) => {
- 				this.setState(
- 					(prevState) => ({
- 					latitude: position.coords.latitude,
- 					longitude: position.coords.longitude
- 					}), () => { this.getWeather(); }
- 				);
- 			},
- 			(error) => this.setState({ forecast: error.message }),
- 			{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
- 		);
- 	}
+	getWeatherInfo(){
+		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityName + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
+		fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			this.setState((prevState, props) => ({
+				forecast: data
+			}));
+		})
+	}
+	getWeather(){
 
- 	getWeather(){
+		// Construct the API url to call
+		let url = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + this.state.latitude + '&lon=' + this.state.longitude + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196';
 
- 		// Construct the API url to call
- 		let url = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + this.state.latitude + '&lon=' + this.state.longitude + '&units=metric&appid=YOUR_KEY_HERE';
+		// Call the API, and set the state of the weather forecast
+		fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			this.setState((prevState, props) => ({
+				forecast: data
+			}));
+		})
+	}
 
- 		// Call the API, and set the state of the weather forecast
- 		fetch(url)
- 		.then(response => response.json())
- 		.then(data => {
- 			this.setState((prevState, props) => ({
- 				forecast: data
- 			}));
- 		})
- 	}
-
- 	render() {
- 		return (
- 			<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
- 		);
- 	}
- }
+	render() {
+		return (
+			<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
+		);
+	}
+}
