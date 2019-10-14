@@ -63,16 +63,14 @@ export default class App extends React.Component {
 	// }
 
 	getWeatherInfo(){
-		// let url = 'https://api.openweathermap.org/data/2.5/weather?q=Dhaka&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
-
 		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityname + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
 		fetch(url)
 		.then(response => response.json())
 		.then(data => {
 			console.log(data);
-			let tempData = JSON.stringify(data);
-          	console.log(tempData);
-			alert(tempData);
+			// let tempData = JSON.stringify(data);
+          	// console.log(tempData);
+			// alert(tempData);
 			let time;
 
 			// Create a new date from the passed date time
@@ -92,12 +90,12 @@ export default class App extends React.Component {
 				description: data.weather[0].description,
 				temperature: data.main.temp
 			});
-			console.log("after set state:")
-			console.log(data.weather[0].icon)
+			// console.log("after set state:")
+			// console.log(data.weather[0].icon)
 		})
 		.catch(function(error){
 			console.log(error.message);
-			throw error;
+			throw error.message;
 		  });
 	}
 	// getWeather(){
@@ -125,6 +123,15 @@ export default class App extends React.Component {
 		);
 		return (			
 			<View style={styles.main}>
+
+				<Text style={styles.title}>Search For City</Text>
+
+				<TextInput style={styles.searchInput} value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})}/>
+				
+				<TouchableHighlight style = {styles.button} onPress = {this.handleSubmit} >
+					<Text style={styles.buttonText}>SEARCH</Text>
+				</TouchableHighlight>
+				{showErr}
 				<Card containerStyle={styles.card}>
 					<Text style={styles.notes}>{this.state.forecast.name}</Text>
 
@@ -138,14 +145,6 @@ export default class App extends React.Component {
 						<Text style={styles.notes}>{Math.round( this.state.temperature * 10) / 10 }&#8451;</Text>
 					</View>
 				</Card>
-				<Text style={styles.title}>Search For City</Text>
-			
-				<TextInput style={styles.searchInput} value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})}/>
-				
-				<TouchableHighlight style = {styles.button} onPress = {this.handleSubmit} >
-					<Text style={styles.buttonText}>SEARCH</Text>
-				</TouchableHighlight>
-				{showErr}
 			</View>
 			
 			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />*/
