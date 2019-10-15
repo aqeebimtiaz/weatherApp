@@ -13,6 +13,12 @@ import { Card, Divider } from 'react-native-elements';
 navigator.geolocation = require('@react-native-community/geolocation');
 import { FlatList } from 'react-native';
 import ForecastCard from './components/ForecastCard';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+const humidityIcon = <Icon name="water-percent" size={25} color="#fff" />;
+const windIcon = <Icon name="weather-windy" size={25} color="#fff" />;
+const cloudIcon = <Icon name="cloud" size={25} color="#fff" />;
+const sunriseIcon = <Icon name="weather-sunset-up" size={25} color="#fff" />;
+const sunsetIcon = <Icon name="weather-sunset-down" size={25} color="#fff" />;
 
 export async function request_device_location_runtime_permission() {
  
@@ -51,6 +57,9 @@ export default class App extends React.Component {
 			forecast: [],
 			latitude: '',
 			longitude: '',
+			humidity: '',
+			windSpeed: '',
+			cloudPercentage: '',
 			error: false
 		}
 		this.handleChange = this.handleChange.bind(this);
@@ -131,24 +140,20 @@ export default class App extends React.Component {
 			// let tempData = JSON.stringify(data);
           	// console.log(tempData);
 			// alert(tempData);
-			let time;
-
-			// Create a new date from the passed date time
-			var date = new Date(data.dt*1000);
-
-			// Hours part from the timestamp
-			var hours = date.getHours();
-
-			// Minutes part from the timestamp
-			var minutes = "0" + date.getMinutes();
-
-			time = hours + ':' + minutes.substr(-2);  
+			var time = this.convertTime(data.dt);
+			var sunrise = this.convertTime(data.sys.sunrise);
+			var sunset = this.convertTime(data.sys.sunset);
 			this.setState({
 				forecast: data,
 				time: time,
 				icon: data.weather[0].icon,
 				description: data.weather[0].description,
-				temperature: data.main.temp
+				temperature: data.main.temp,
+				humidity: data.main.humidity,
+				windSpeed: data.wind.speed,
+				cloudPercentage: data.clouds.all,
+				sunrise: sunrise,
+				sunset: sunset
 			});
 			// console.log("after set state:")
 			// console.log(data.weather[0].icon)
@@ -157,6 +162,22 @@ export default class App extends React.Component {
 			console.log(error.message);
 			throw error.message;
 		  });
+	}
+	convertTime(timeStamp){
+		let time;
+
+		// Create a new date from the passed date time
+		var date = new Date(timeStamp*1000);
+
+		// Hours part from the timestamp
+		var hours = date.getHours() - (date.getHours() >= 12 ? 12 : 0);
+
+		// Minutes part from the timestamp
+		var minutes = "0" + date.getMinutes();
+		var period = date.getHours() >= 12 ? ' PM' : ' AM';
+
+		time = hours + ':' + minutes.substr(-2) + period;
+		return time;
 	}
 	getWeather(){
 
@@ -172,24 +193,32 @@ export default class App extends React.Component {
 			// let tempData = JSON.stringify(data);
 				// console.log(tempData);
 			// alert(tempData);
-			let time;
+			var time = this.convertTime(data.dt);
+			var sunrise = this.convertTime(data.sys.sunrise);
+			var sunset = this.convertTime(data.sys.sunset);
+			// let time;
 
-			// Create a new date from the passed date time
-			var date = new Date(data.dt*1000);
+			// // Create a new date from the passed date time
+			// var date = new Date(data.dt*1000);
 
-			// Hours part from the timestamp
-			var hours = date.getHours();
+			// // Hours part from the timestamp
+			// var hours = date.getHours();
 
-			// Minutes part from the timestamp
-			var minutes = "0" + date.getMinutes();
+			// // Minutes part from the timestamp
+			// var minutes = "0" + date.getMinutes();
 
-			time = hours + ':' + minutes.substr(-2);  
+			// time = hours + ':' + minutes.substr(-2);  
 			this.setState({
 				forecast: data,
 				time: time,
 				icon: data.weather[0].icon,
 				description: data.weather[0].description,
-				temperature: data.main.temp
+				temperature: data.main.temp,
+				humidity: data.main.humidity,
+				windSpeed: data.wind.speed,
+				cloudPercentage: data.clouds.all,
+				sunrise: sunrise,
+				sunset: sunset
 			});
 			// console.log("after set state:")
 			// console.log(data.weather[0].icon)
@@ -223,15 +252,34 @@ export default class App extends React.Component {
 					<Text style={styles.notes}>{this.state.forecast.name}</Text>
 
 					<View style={{flexDirection:'row',  justifyContent:'space-between', alignItems:'center'}}>
-						<Image style={{width:100, height:100}} source={{uri:"https://openweathermap.org/img/w/" + this.state.icon + ".png"}} />
-						<Text style={styles.time}>{this.state.time}</Text>						
+
+						<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
+							<Image style={{width:100, height:100}} source={{uri:"https://openweathermap.org/img/w/" + this.state.icon + ".png"}} />
+							<Text style={styles.notes}>{this.state.description}</Text>
+						</View>
+						
+
+						<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
+							<Text style={styles.time}>{Math.round( this.state.temperature * 10) / 10 }&#8451;</Text>
+							<Text style={styles.notes}>{cloudIcon} {this.state.cloudPercentage}% </Text>
+
+							<View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
+								<Text style={styles.notes}>{humidityIcon} {this.state.humidity}% </Text>
+								<Text style={styles.notesNotCapital}>{windIcon} {this.state.windSpeed}m/s</Text>
+							</View>
+
+						</View>
 					</View>
+
 					<Divider style={{ backgroundColor: '#dfe6e9', marginVertical:20}} />
+
 					<View style={{flexDirection:'row', justifyContent:'space-between'}}>
-						<Text style={styles.notes}>{this.state.description}</Text>
-						<Text style={styles.notes}>{Math.round( this.state.temperature * 10) / 10 }&#8451;</Text>
+						<Text style={styles.notesNotCapital}>{sunriseIcon} {this.state.sunrise}</Text>
+						<Text style={styles.notesNotCapital}>{sunsetIcon} {this.state.sunset}</Text>
 					</View>
+
 				</Card>
+
 			</View>
 			
 			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />*/
@@ -240,8 +288,8 @@ export default class App extends React.Component {
 }
 const styles = StyleSheet.create({
 	main: {
-	  // flex: 1,
-	  padding: 30,
+	  flex: 1,
+	  padding: 10,
 	  marginTop: 65,
 	  flexDirection: 'column',
 	  justifyContent: 'center',
@@ -293,6 +341,10 @@ const styles = StyleSheet.create({
 	notes: {
 		fontSize: 18,
 		color:'#fff',
-		textTransform:'capitalize'
+		textTransform:'capitalize',
+	},
+	notesNotCapital: {
+		fontSize: 18,
+		color:'#fff'
 	}
 });
