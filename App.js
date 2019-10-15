@@ -6,13 +6,37 @@ import {
 	StyleSheet,
 	TextInput,
 	TouchableHighlight,
-	TouchableOpacity
+	TouchableOpacity,
+	PermissionsAndroid, Alert, Platform 
   } from 'react-native';
 import { Card, Divider } from 'react-native-elements';
-import Geolocation from '@react-native-community/geolocation';
+navigator.geolocation = require('@react-native-community/geolocation');
 import { FlatList } from 'react-native';
 import ForecastCard from './components/ForecastCard';
 
+export async function request_device_location_runtime_permission() {
+ 
+	try {
+	  const granted = await PermissionsAndroid.request(
+		PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+		{
+		  'title': 'Weather App Location Permission',
+		  'message': 'Weather App needs access to your location '
+		}
+	  )
+	  if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+		console.log("Location Permission Granted.");
+		// Alert.alert("Location Permission Granted.");
+	  }
+	  else {
+   
+		Alert.alert("Location Permission Not Granted");
+   
+	  }
+	} catch (err) {
+	  console.warn(err)
+	}
+  }
 
 export default class App extends React.Component {
 
@@ -25,6 +49,8 @@ export default class App extends React.Component {
 			description: '',
 			temperature: 0.00,
 			forecast: [],
+			latitude: '',
+			longitude: '',
 			error: false
 		}
 		this.handleChange = this.handleChange.bind(this);
@@ -39,10 +65,44 @@ export default class App extends React.Component {
 		this.getWeatherInfo(this.state.cityname);
 	}
 	
-	componentDidMount(){
+	async componentDidMount(){
 		// Get the user's location
 		// this.getLocation();
-		// this.getWeatherInfo()
+		// this.getWeatherInfo();
+		if(Platform.OS === 'android')
+		{
+			await request_device_location_runtime_permission();
+		}
+		navigator.geolocation.getCurrentPosition(info => {
+			// console.log(info);
+			this.setState({
+				latitude: info.coords.latitude,
+				longitude: info.coords.longitude,
+				error: null,
+			});
+			console.log('longtitude & latitude:');
+			console.log(this.state.longitude);
+			console.log( this.state.latitude);
+			this.getWeather();
+			(error) => this.setState({ error: error.message }),
+			{ enableHighAccuracy: true, timeout: 2000, maximumAge: 100, distanceFilter: 10 }
+		});
+		
+		// this.getLongLat = navigator.geolocation.watchPosition(
+		// 	(position) => {
+		// 	  this.setState({
+		// 		latitude: position.coords.latitude,
+		// 		longitude: position.coords.longitude,
+		// 		error: null,
+		// 	  });
+		// 	},
+		// 	(error) => this.setState({ error: error.message }),
+		// 	{ enableHighAccuracy: true, timeout: 2000, maximumAge: 100, distanceFilter: 10 },
+		// );
+		
+	}
+	componentWillUnmount() {
+		navigator.geolocation.clearWatch(this.getLongLat);
 	}
 
 	// getLocation(){
@@ -98,20 +158,47 @@ export default class App extends React.Component {
 			throw error.message;
 		  });
 	}
-	// getWeather(){
+	getWeather(){
 
-	// 	// Construct the API url to call
-	// 	let url = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + this.state.latitude + '&lon=' + this.state.longitude + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196';
+		// Construct the API url to call
+		let url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + this.state.latitude + '&lon=' + this.state.longitude + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196';
+		// console.log(url);
 
-	// 	// Call the API, and set the state of the weather forecast
-	// 	fetch(url)
-	// 	.then(response => response.json())
-	// 	.then(data => {
-	// 		this.setState((prevState, props) => ({
-	// 			forecast: data
-	// 		}));
-	// 	})
-	// }
+		// Call the API, and set the state of the weather forecast
+		fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			console.log(data);
+			// let tempData = JSON.stringify(data);
+				// console.log(tempData);
+			// alert(tempData);
+			let time;
+
+			// Create a new date from the passed date time
+			var date = new Date(data.dt*1000);
+
+			// Hours part from the timestamp
+			var hours = date.getHours();
+
+			// Minutes part from the timestamp
+			var minutes = "0" + date.getMinutes();
+
+			time = hours + ':' + minutes.substr(-2);  
+			this.setState({
+				forecast: data,
+				time: time,
+				icon: data.weather[0].icon,
+				description: data.weather[0].description,
+				temperature: data.main.temp
+			});
+			// console.log("after set state:")
+			// console.log(data.weather[0].icon)
+		})
+		.catch(function(error){
+			console.log(error.message);
+			throw error.message;
+		  });
+	}
 
 	render() {
 		let showErr = (
