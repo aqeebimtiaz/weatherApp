@@ -14,6 +14,7 @@ navigator.geolocation = require('@react-native-community/geolocation');
 import { FlatList } from 'react-native';
 import ForecastCard from './components/ForecastCard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 const humidityIcon = <Icon name="water-percent" size={25} color="#fff" />;
 const windIcon = <Icon name="weather-windy" size={25} color="#fff" />;
 const cloudIcon = <Icon name="cloud" size={25} color="#fff" />;
@@ -60,6 +61,7 @@ export default class App extends React.Component {
 			humidity: '',
 			windSpeed: '',
 			cloudPercentage: '',
+			loading: false,
 			error: false
 		}
 		this.handleChange = this.handleChange.bind(this);
@@ -74,17 +76,18 @@ export default class App extends React.Component {
 		this.getWeatherInfo(this.state.cityname);
 	}
 	
-	async componentDidMount(){
+	componentDidMount(){
 		// Get the user's location
 		// this.getLocation();
 		// this.getWeatherInfo();
 		if(Platform.OS === 'android')
 		{
-			await request_device_location_runtime_permission();
+			request_device_location_runtime_permission();
 		}
 		navigator.geolocation.getCurrentPosition(info => {
 			// console.log(info);
 			this.setState({
+				loading: !this.state.loading,
 				latitude: info.coords.latitude,
 				longitude: info.coords.longitude,
 				error: null,
@@ -94,7 +97,7 @@ export default class App extends React.Component {
 			console.log( this.state.latitude);
 			this.getWeather();
 			(error) => this.setState({ error: error.message }),
-			{ enableHighAccuracy: true, timeout: 2000, maximumAge: 100, distanceFilter: 10 }
+			{ enableHighAccuracy: false, timeout: 20000, maximumAge: 10000, distanceFilter: 10 }
 		});
 		
 		// this.getLongLat = navigator.geolocation.watchPosition(
@@ -163,6 +166,7 @@ export default class App extends React.Component {
 			throw error.message;
 		  });
 	}
+	
 	convertTime(timeStamp){
 		let time;
 
@@ -179,6 +183,7 @@ export default class App extends React.Component {
 		time = hours + ':' + minutes.substr(-2) + period;
 		return time;
 	}
+
 	getWeather(){
 
 		// Construct the API url to call
@@ -237,6 +242,7 @@ export default class App extends React.Component {
 			</Text> :
 			<View></View>
 		);
+		
 		return (			
 			<View style={styles.main}>
 
