@@ -92,12 +92,12 @@ export default class App extends React.Component {
 				longitude: info.coords.longitude,
 				error: null,
 			});
-			console.log('longtitude & latitude:');
-			console.log(this.state.longitude);
-			console.log( this.state.latitude);
+			// console.log('longtitude & latitude:');
+			// console.log(this.state.longitude);
+			// console.log( this.state.latitude);
 			this.getWeather();
 			(error) => this.setState({ error: error.message }),
-			{ enableHighAccuracy: false, timeout: 20000, maximumAge: 10000, distanceFilter: 10 }
+			{ enableHighAccuracy: false, timeout: 40000, maximumAge: 20000, distanceFilter: 10 }
 		});
 		
 		// this.getLongLat = navigator.geolocation.watchPosition(
@@ -133,16 +133,13 @@ export default class App extends React.Component {
 	// 		{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
 	// 	);
 	// }
-
-	getWeatherInfo(){
-		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityname + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
-		fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			console.log(data);
-			// let tempData = JSON.stringify(data);
-          	// console.log(tempData);
-			// alert(tempData);
+	
+	processData(data){
+		if (data.cod == 404){
+			let message = data.message.replace(/^\w/, c => c.toUpperCase());
+			Alert.alert(message);
+		}
+		else if (data.cod == 200){
 			var time = this.convertTime(data.dt);
 			var sunrise = this.convertTime(data.sys.sunrise);
 			var sunset = this.convertTime(data.sys.sunset);
@@ -160,13 +157,9 @@ export default class App extends React.Component {
 			});
 			// console.log("after set state:")
 			// console.log(data.weather[0].icon)
-		})
-		.catch(function(error){
-			console.log(error.message);
-			throw error.message;
-		  });
+		}
 	}
-	
+
 	convertTime(timeStamp){
 		let time;
 
@@ -184,6 +177,23 @@ export default class App extends React.Component {
 		return time;
 	}
 
+	getWeatherInfo(){
+		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityname + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
+		fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			console.log(data);
+			// let tempData = JSON.stringify(data);
+          	// console.log(tempData);
+			// alert(tempData);
+			this.processData(data);			
+		})
+		.catch(function(error){
+			console.log(error.message);
+			throw error.message;
+		  });
+	}
+	
 	getWeather(){
 
 		// Construct the API url to call
@@ -198,35 +208,7 @@ export default class App extends React.Component {
 			// let tempData = JSON.stringify(data);
 				// console.log(tempData);
 			// alert(tempData);
-			var time = this.convertTime(data.dt);
-			var sunrise = this.convertTime(data.sys.sunrise);
-			var sunset = this.convertTime(data.sys.sunset);
-			// let time;
-
-			// // Create a new date from the passed date time
-			// var date = new Date(data.dt*1000);
-
-			// // Hours part from the timestamp
-			// var hours = date.getHours();
-
-			// // Minutes part from the timestamp
-			// var minutes = "0" + date.getMinutes();
-
-			// time = hours + ':' + minutes.substr(-2);  
-			this.setState({
-				forecast: data,
-				time: time,
-				icon: data.weather[0].icon,
-				description: data.weather[0].description,
-				temperature: data.main.temp,
-				humidity: data.main.humidity,
-				windSpeed: data.wind.speed,
-				cloudPercentage: data.clouds.all,
-				sunrise: sunrise,
-				sunset: sunset
-			});
-			// console.log("after set state:")
-			// console.log(data.weather[0].icon)
+			this.processData(data);
 		})
 		.catch(function(error){
 			console.log(error.message);
