@@ -92,9 +92,9 @@ export default class App extends React.Component {
 				longitude: info.coords.longitude,
 				error: null,
 			});
-			// console.log('longtitude & latitude:');
-			// console.log(this.state.longitude);
-			// console.log( this.state.latitude);
+			console.log('longtitude & latitude:');
+			console.log(this.state.longitude);
+			console.log( this.state.latitude);
 			this.getWeather();
 			(error) => this.setState({ error: error.message }),
 			{ enableHighAccuracy: false, timeout: 40000, maximumAge: 20000, distanceFilter: 10 }
@@ -177,6 +177,7 @@ export default class App extends React.Component {
 		return time;
 	}
 
+	// Get weather by city name
 	getWeatherInfo(){
 		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityname + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
 		fetch(url)
@@ -191,9 +192,12 @@ export default class App extends React.Component {
 		.catch(function(error){
 			console.log(error.message);
 			throw error.message;
-		  });
+		});
+
+		// this.getForecast();
 	}
 	
+	// Get weather by coordinates
 	getWeather(){
 
 		// Construct the API url to call
@@ -209,6 +213,28 @@ export default class App extends React.Component {
 				// console.log(tempData);
 			// alert(tempData);
 			this.processData(data);
+		})
+		.catch(function(error){
+			console.log(error.message);
+			throw error.message;
+		  });
+
+		// this.getForecast();
+	}
+
+	// Get weather FORECAST by coordinates
+	getForecast(){
+		let url = 'https://api.openweathermap.org/data/2.5/forecast?lat='+this.state.latitude+'&lon='+this.state.longitude+'&appid=ce0cb4b99e8ee814c20a4f76609c8196';
+		fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			console.log(data);
+			// let tempData = JSON.stringify(data);
+          	// console.log(tempData);
+			// alert(tempData);
+			this.setState({
+				forecast: data
+			})		
 		})
 		.catch(function(error){
 			console.log(error.message);
@@ -268,9 +294,11 @@ export default class App extends React.Component {
 
 				</Card>
 
+				<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
+
 			</View>
 			
-			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />*/
+			
 		);
 	}
 }
