@@ -7,19 +7,35 @@ import {
 	TextInput,
 	TouchableHighlight,
 	TouchableOpacity,
-	PermissionsAndroid, Alert, Platform 
+	PermissionsAndroid, Alert, Platform,
+	Dimensions 
   } from 'react-native';
 import { Card, Divider } from 'react-native-elements';
 navigator.geolocation = require('@react-native-community/geolocation');
 import { FlatList } from 'react-native';
 import ForecastCard from './components/ForecastCard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { LineChart } from "react-native-chart-kit";
 
 const humidityIcon = <Icon name="water-percent" size={25} color="#fff" />;
 const windIcon = <Icon name="weather-windy" size={25} color="#fff" />;
 const cloudIcon = <Icon name="cloud" size={25} color="#fff" />;
 const sunriseIcon = <Icon name="weather-sunset-up" size={25} color="#fff" />;
 const sunsetIcon = <Icon name="weather-sunset-down" size={25} color="#fff" />;
+const screenWidth = Dimensions.get("window").width;
+
+var listChartData = {
+	
+};
+const chartConfig = {
+	backgroundGradientFrom: '#1E2923',
+	backgroundGradientFromOpacity: 0,
+	backgroundGradientTo: '#08130D',
+	backgroundGradientToOpacity: 0.5,
+	color: (opacity = 1) => `rgba(56, 172, 236, ${opacity})`,
+	strokeWidth: 2, // optional, default 3
+	barPercentage:0.5
+  }
 
 export async function request_device_location_runtime_permission() {
  
@@ -62,6 +78,8 @@ export default class App extends React.Component {
 			windSpeed: '',
 			cloudPercentage: '',
 			loading: false,
+			listChartLabels:[],
+			forecastTemp:[],
 			error: false
 		}
 		this.handleChange = this.handleChange.bind(this);
@@ -96,9 +114,13 @@ export default class App extends React.Component {
 			console.log(this.state.longitude);
 			console.log( this.state.latitude);
 			this.getWeather();
+			this.getForecast();
+			console.log('listChartData from componentDid')
+			console.log(listChartData);
 			(error) => this.setState({ error: error.message }),
 			{ enableHighAccuracy: false, timeout: 40000, maximumAge: 20000, distanceFilter: 10 }
 		});
+		
 		
 		// this.getLongLat = navigator.geolocation.watchPosition(
 		// 	(position) => {
@@ -171,7 +193,7 @@ export default class App extends React.Component {
 
 		// Minutes part from the timestamp
 		var minutes = "0" + date.getMinutes();
-		var period = date.getHours() >= 12 ? ' PM' : ' AM';
+		var period = date.getHours() >= 12 ? ' AM' : ' PM';
 
 		time = hours + ':' + minutes.substr(-2) + period;
 		return time;
@@ -183,7 +205,7 @@ export default class App extends React.Component {
 		fetch(url)
 		.then(response => response.json())
 		.then(data => {
-			console.log(data);
+			// console.log(data);
 			// let tempData = JSON.stringify(data);
           	// console.log(tempData);
 			// alert(tempData);
@@ -208,7 +230,7 @@ export default class App extends React.Component {
 		fetch(url)
 		.then(response => response.json())
 		.then(data => {
-			console.log(data);
+			// console.log(data);
 			// let tempData = JSON.stringify(data);
 				// console.log(tempData);
 			// alert(tempData);
@@ -220,26 +242,68 @@ export default class App extends React.Component {
 		  });
 
 		// this.getForecast();
+		
+		
+	}
+
+	processForecastData(returnData){
+		// returnData = data;
+		let date;
+		let time = '';
+		let period = '';
+		let forecastTemp = [];
+		let listChartLabels = [];
+		returnData.list.forEach(element => {
+			forecastTemp.push(parseFloat(element.main.temp));
+			// date = new Date(element.dt_txt);
+			// period = date.getHours() >= 12 ? ' PM' : ' AM';
+			// time = date.getHours() + ':00' + period;
+			time = this.convertTime(element.dt);
+			// console.log(time);
+			listChartLabels.push(time);
+		});
+		// console.log(forecastTemp);
+		// console.log(listChartLabels);
+		// console.log(returnData);
+		// let forecastTemp = [];
+
+		this.setState({
+			listChartLabels: listChartLabels,
+			forecastTemp: forecastTemp
+		});
+		// console.log(listChartData);
+		// return listChartData;
+		
 	}
 
 	// Get weather FORECAST by coordinates
 	getForecast(){
-		let url = 'https://api.openweathermap.org/data/2.5/forecast?lat='+this.state.latitude+'&lon='+this.state.longitude+'&appid=ce0cb4b99e8ee814c20a4f76609c8196';
+		let returnData;
+		let url = 'https://api.openweathermap.org/data/2.5/forecast?lat='+this.state.latitude+'&lon='+this.state.longitude+'&cnt=8&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196';
 		fetch(url)
 		.then(response => response.json())
 		.then(data => {
-			console.log(data);
-			// let tempData = JSON.stringify(data);
-          	// console.log(tempData);
-			// alert(tempData);
+			// console.log(data);
 			this.setState({
 				forecast: data
-			})		
+			});
+
+			this.processForecastData(data);
+			// console.log(this.state.listChartLabels)
+			listChartData = {
+				labels:this.state.listChartLabels,
+				datasets:[{
+					data:this.state.forecastTemp
+				}]}
+			// console.log('listChartData from getForecast')
+			// console.log(listChartData.datasets[0]);
+			// console.log(this.state.forecastTemp)
+			
 		})
 		.catch(function(error){
 			console.log(error.message);
 			throw error.message;
-		  });
+		});
 	}
 
 	render() {
@@ -250,6 +314,47 @@ export default class App extends React.Component {
 			</Text> :
 			<View></View>
 		);
+
+		console.log("from render");
+		// console.log(this.state.forecast.list);
+		// let forecast = this.state.forecast.list;
+		// console.log(forecast);
+		let futureTemp = [];
+		while(Object.keys(this.state.listChartLabels).length != Object.keys(futureTemp).length){
+			this.state.forecastTemp.map(
+				element => {
+					futureTemp.push(element);
+				}
+			);
+		}
+		
+		// console.log(futureTemp);
+		let graph = <Text>Not initialized</Text>;
+		if (Object.keys(this.state.listChartLabels).length == Object.keys(futureTemp).length){
+			console.log("temp updated")
+			console.log(futureTemp);
+			console.log(this.state.listChartLabels);
+			const data = {
+				labels: this.state.listChartLabels,
+				datasets: [
+					{
+						// data: futureTemp
+						data: [1,5,9,7,3,8,6,2]
+					}
+				]
+			};
+			graph = 
+				<LineChart
+					data={data}
+					width={screenWidth}
+					height={100}
+					style={{marginTop:5}}
+					verticalLabelRotation={30}
+					chartConfig={chartConfig}
+					bezier
+				/>;
+			
+		}
 		
 		return (			
 			<View style={styles.main}>
@@ -293,11 +398,13 @@ export default class App extends React.Component {
 					</View>
 
 				</Card>
-
-				<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
-
+				
+					{graph}
+				 
 			</View>
+			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
 			
+			*/
 			
 		);
 	}
@@ -306,7 +413,7 @@ const styles = StyleSheet.create({
 	main: {
 	  flex: 1,
 	  padding: 10,
-	  marginTop: 65,
+	  marginTop: 10,
 	  flexDirection: 'column',
 	  justifyContent: 'center',
 	  // backgroundColor: '#2a8ab7'
