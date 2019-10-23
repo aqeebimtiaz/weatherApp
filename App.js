@@ -258,7 +258,11 @@ export default class App extends React.Component {
 
 				<Text style={styles.title}>Search For City</Text>
 
-				<TextInput style={styles.searchInput} value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})}/>
+				<TextInput 
+					style={styles.searchInput} 
+					value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})} 
+					onSubmitEditing={this.handleSubmit}
+				/>
 				
 				<TouchableHighlight style = {styles.button} onPress = {this.handleSubmit} >
 					<Text style={styles.buttonText}>SEARCH</Text>
