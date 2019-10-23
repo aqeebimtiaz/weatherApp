@@ -52,6 +52,7 @@ export default class App extends React.Component {
 		this.state = {
 			cityname: '',
 			time: '',
+			name: '',
 			icon: '',
 			description: '',
 			temperature: 0.00,
@@ -146,6 +147,7 @@ export default class App extends React.Component {
 			this.setState({
 				forecast: data,
 				time: time,
+				name: data.name,
 				icon: data.weather[0].icon,
 				description: data.weather[0].description,
 				temperature: data.main.temp,
@@ -263,7 +265,7 @@ export default class App extends React.Component {
 				</TouchableHighlight>
 				{showErr}
 				<Card containerStyle={styles.card}>
-					<Text style={styles.notes}>{this.state.forecast.name}</Text>
+					<Text style={styles.notesHeading}>{this.state.name}</Text>
 
 					<View style={{flexDirection:'row',  justifyContent:'space-between', alignItems:'center'}}>
 
@@ -294,9 +296,11 @@ export default class App extends React.Component {
 
 				</Card>
 
-				<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
-
 			</View>
+
+			/*
+			<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
+			*/
 			
 			
 		);
@@ -362,5 +366,9 @@ const styles = StyleSheet.create({
 	notesNotCapital: {
 		fontSize: 18,
 		color:'#fff'
+	},
+	notesHeading:{
+		fontSize: 22,
+		color:'#fff',
 	}
 });
