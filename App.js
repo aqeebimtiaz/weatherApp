@@ -67,6 +67,7 @@ export default class App extends React.Component {
 		super(props);
 		this.state = {
 			cityname: '',
+			name:'',
 			time: '',
 			icon: '',
 			description: '',
@@ -114,7 +115,7 @@ export default class App extends React.Component {
 			console.log(this.state.longitude);
 			console.log( this.state.latitude);
 			this.getWeather();
-			this.getForecast();
+			// this.getForecast();
 			console.log('listChartData from componentDid')
 			console.log(listChartData);
 			(error) => this.setState({ error: error.message }),
@@ -167,6 +168,7 @@ export default class App extends React.Component {
 			var sunset = this.convertTime(data.sys.sunset);
 			this.setState({
 				forecast: data,
+				name: data.name,
 				time: time,
 				icon: data.weather[0].icon,
 				description: data.weather[0].description,
@@ -193,9 +195,10 @@ export default class App extends React.Component {
 
 		// Minutes part from the timestamp
 		var minutes = "0" + date.getMinutes();
-		var period = date.getHours() >= 12 ? ' AM' : ' PM';
+		var period = date.getHours() >= 12 ? ' PM' : ' AM';
 
 		time = hours + ':' + minutes.substr(-2) + period;
+		// time = hours + period;
 		return time;
 	}
 
@@ -241,7 +244,7 @@ export default class App extends React.Component {
 			throw error.message;
 		  });
 
-		// this.getForecast();
+		this.getForecast();
 		
 		
 	}
@@ -333,13 +336,13 @@ export default class App extends React.Component {
 		if (Object.keys(this.state.listChartLabels).length == Object.keys(futureTemp).length){
 			console.log("temp updated")
 			console.log(futureTemp);
-			console.log(this.state.listChartLabels);
+			// console.log(this.state.listChartLabels);
 			const data = {
 				labels: this.state.listChartLabels,
 				datasets: [
 					{
 						// data: futureTemp
-						data: [1,5,9,7,3,8,6,2]
+						data: [ 31.87, 30.81, 27.79, 26.94, 26.39, 25.75, 24.24, 23.37 ]
 					}
 				]
 			};
@@ -347,8 +350,7 @@ export default class App extends React.Component {
 				<LineChart
 					data={data}
 					width={screenWidth}
-					height={100}
-					style={{marginTop:5}}
+					height={120}
 					verticalLabelRotation={30}
 					chartConfig={chartConfig}
 					bezier
@@ -368,7 +370,7 @@ export default class App extends React.Component {
 				</TouchableHighlight>
 				{showErr}
 				<Card containerStyle={styles.card}>
-					<Text style={styles.notes}>{this.state.forecast.name}</Text>
+					<Text style={styles.notes, styles.notesHeading}>{this.state.name}</Text>
 
 					<View style={{flexDirection:'row',  justifyContent:'space-between', alignItems:'center'}}>
 
@@ -399,8 +401,10 @@ export default class App extends React.Component {
 
 				</Card>
 				
+				<View style={{marginRight:20}}>
 					{graph}
-				 
+				</View>
+				
 			</View>
 			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
 			
