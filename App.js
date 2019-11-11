@@ -8,6 +8,8 @@ import {
 	TouchableHighlight,
 	TouchableOpacity,
 	PermissionsAndroid, Alert, Platform,
+	ScrollView,
+    SafeAreaView,
 	Dimensions 
   } from 'react-native';
 import { Card, Divider } from 'react-native-elements';
@@ -203,7 +205,7 @@ export default class App extends React.Component {
 	}
 
 	// Get weather by city name
-	getWeatherInfo(){
+	getWeatherInfo = async() => {
 		let url = 'https://api.openweathermap.org/data/2.5/weather?q=' + this.state.cityname + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196'
 		fetch(url)
 		.then(response => response.json())
@@ -219,11 +221,11 @@ export default class App extends React.Component {
 			throw error.message;
 		});
 
-		// this.getForecast();
+		await this.getForecast();
 	}
 	
 	// Get weather by coordinates
-	getWeather(){
+	getWeather = async() => {
 
 		// Construct the API url to call
 		let url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + this.state.latitude + '&lon=' + this.state.longitude + '&units=metric&appid=ce0cb4b99e8ee814c20a4f76609c8196';
@@ -244,7 +246,7 @@ export default class App extends React.Component {
 			throw error.message;
 		  });
 
-		this.getForecast();
+		await this.getForecast();
 		
 		
 	}
@@ -342,7 +344,7 @@ export default class App extends React.Component {
 				datasets: [
 					{
 						// data: futureTemp
-						data: [ 31.87, 30.81, 27.79, 26.94, 26.39, 25.75, 24.24, 23.37 ]
+						data: [ 31.87, 27.79, 26.94, 26.39, 25.75, 24.24, 23.37, 30.81 ]
 					}
 				]
 			};
@@ -358,54 +360,61 @@ export default class App extends React.Component {
 			
 		}
 		
-		return (			
-			<View style={styles.main}>
+		return (
+			<SafeAreaView>
+                <ScrollView
+                    contentInsetAdjustmentBehavior="automatic"
+                    style={styles.scrollView}>
 
-				<Text style={styles.title}>Search For City</Text>
+					<View style={styles.main}>
 
-				<TextInput style={styles.searchInput} value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})}/>
-				
-				<TouchableHighlight style = {styles.button} onPress = {this.handleSubmit} >
-					<Text style={styles.buttonText}>SEARCH</Text>
-				</TouchableHighlight>
-				{showErr}
-				<Card containerStyle={styles.card}>
-					<Text style={styles.notes, styles.notesHeading}>{this.state.name}</Text>
+						<Text style={styles.title}>Search For City</Text>
 
-					<View style={{flexDirection:'row',  justifyContent:'space-between', alignItems:'center'}}>
+						<TextInput style={styles.searchInput} value = {this.state.cityname} onChangeText = {(cityname) => this.setState({cityname})}/>
 
-						<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
-							<Image style={{width:100, height:100}} source={{uri:"https://openweathermap.org/img/w/" + this.state.icon + ".png"}} />
-							<Text style={styles.notes}>{this.state.description}</Text>
-						</View>
-						
+						<TouchableHighlight style = {styles.button} onPress = {this.handleSubmit} >
+							<Text style={styles.buttonText}>SEARCH</Text>
+						</TouchableHighlight>
+						{showErr}
+						<Card containerStyle={styles.card}>
+							<Text style={styles.notes}>{this.state.name}</Text>
 
-						<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
-							<Text style={styles.time}>{Math.round( this.state.temperature * 10) / 10 }&#8451;</Text>
-							<Text style={styles.notes}>{cloudIcon} {this.state.cloudPercentage}% </Text>
+							<View style={{flexDirection:'row',  justifyContent:'space-between', alignItems:'center'}}>
 
-							<View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-								<Text style={styles.notes}>{humidityIcon} {this.state.humidity}% </Text>
-								<Text style={styles.notesNotCapital}>{windIcon} {this.state.windSpeed}m/s</Text>
+								<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
+									<Image style={{width:100, height:100}} source={{uri:"https://openweathermap.org/img/w/" + this.state.icon + ".png"}} />
+									<Text style={styles.notes}>{this.state.description}</Text>
+								</View>
+								
+
+								<View style={{flexDirection:'column', justifyContent:'space-between', alignItems:'center'}}>
+									<Text style={styles.time}>{Math.round( this.state.temperature * 10) / 10 }&#8451;</Text>
+									<Text style={styles.notes}>{cloudIcon} {this.state.cloudPercentage}% </Text>
+
+									<View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
+										<Text style={styles.notes}>{humidityIcon} {this.state.humidity}% </Text>
+										<Text style={styles.notesNotCapital}>{windIcon} {this.state.windSpeed}m/s</Text>
+									</View>
+
+								</View>
 							</View>
 
+							<Divider style={{ backgroundColor: '#dfe6e9', marginVertical:20}} />
+
+							<View style={{flexDirection:'row', justifyContent:'space-between'}}>
+								<Text style={styles.notesNotCapital}>{sunriseIcon} {this.state.sunrise}</Text>
+								<Text style={styles.notesNotCapital}>{sunsetIcon} {this.state.sunset}</Text>
+							</View>
+
+						</Card>
+
+						<View style={{marginRight:20}}>
+							{graph}
 						</View>
+
 					</View>
-
-					<Divider style={{ backgroundColor: '#dfe6e9', marginVertical:20}} />
-
-					<View style={{flexDirection:'row', justifyContent:'space-between'}}>
-						<Text style={styles.notesNotCapital}>{sunriseIcon} {this.state.sunrise}</Text>
-						<Text style={styles.notesNotCapital}>{sunsetIcon} {this.state.sunset}</Text>
-					</View>
-
-				</Card>
-				
-				<View style={{marginRight:20}}>
-					{graph}
-				</View>
-				
-			</View>
+				</ScrollView>
+			</SafeAreaView>
 			/*<FlatList data={this.state.forecast.list} style={{marginTop:20}} keyExtractor={item => item.dt_txt} renderItem={({item}) => <ForecastCard detail={item} location={this.state.forecast.city.name} />} />
 			
 			*/
