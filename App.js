@@ -478,6 +478,7 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		color:'#fff',
 		textTransform:'capitalize',
+		fontFamily: 'Poppins-Italic'
 	},
 	notesNotCapital: {
 		fontSize: 18,
