@@ -10,7 +10,7 @@ import {
 	PermissionsAndroid, Alert, Platform 
   } from 'react-native';
 import { Card, Divider } from 'react-native-elements';
-navigator.geolocation = require('@react-native-community/geolocation');
+import RNLocation from 'react-native-location';
 import { FlatList } from 'react-native';
 import ForecastCard from './components/ForecastCard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -62,10 +62,12 @@ export default class App extends React.Component {
 			windSpeed: '',
 			cloudPercentage: '',
 			loading: false,
-			error: false
+			error: false,
+			locationAccessPermission: false,
+			locationData: {},
 		}
 		this.handleChange = this.handleChange.bind(this);
-    	this.handleSubmit = this.handleSubmit.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 	handleChange(e) {
 		this.setState({
@@ -76,64 +78,50 @@ export default class App extends React.Component {
 		this.getWeatherInfo(this.state.cityname);
 	}
 	
-	componentDidMount(){
+	componentDidMount = async () => {
 		// Get the user's location
 		// this.getLocation();
 		// this.getWeatherInfo();
-		if(Platform.OS === 'android')
-		{
-			request_device_location_runtime_permission();
-		}
-		navigator.geolocation.getCurrentPosition(info => {
-			// console.log(info);
+		RNLocation.configure({
+			distanceFilter: 5.0
+		})
+			
+		await RNLocation.requestPermission({
+			ios: "whenInUse",
+			android: {
+				detail: "fine",
+				rationale: {
+					title: "We need to access your location",
+					message: "We use your location to show where you are on the map",
+					buttonPositive: "OK",
+					buttonNegative: "Cancel"
+				}
+			}
+		}).then(granted => {
 			this.setState({
-				loading: !this.state.loading,
-				latitude: info.coords.latitude,
-				longitude: info.coords.longitude,
-				error: null,
+				locationAccessPermission: granted
 			});
-			console.log('longtitude & latitude:');
-			console.log(this.state.longitude);
-			console.log( this.state.latitude);
-			this.getWeather();
-			(error) => this.setState({ error: error.message }),
-			{ enableHighAccuracy: false, timeout: 40000, maximumAge: 20000, distanceFilter: 10 }
 		});
-		
-		// this.getLongLat = navigator.geolocation.watchPosition(
-		// 	(position) => {
-		// 	  this.setState({
-		// 		latitude: position.coords.latitude,
-		// 		longitude: position.coords.longitude,
-		// 		error: null,
-		// 	  });
-		// 	},
-		// 	(error) => this.setState({ error: error.message }),
-		// 	{ enableHighAccuracy: true, timeout: 2000, maximumAge: 100, distanceFilter: 10 },
-		// );
-		
-	}
-	componentWillUnmount() {
-		navigator.geolocation.clearWatch(this.getLongLat);
+
+		if (this.state.locationAccessPermission) {
+			await RNLocation.getLatestLocation({ timeout: 60000 })
+				.then(latestLocation => {
+					console.log(latestLocation)
+					// this.setState({
+					// 	locationData: latestLocation
+					// })
+					this.setState({
+						loading: !this.state.loading,
+						latitude: latestLocation.latitude,
+						longitude: latestLocation.longitude,
+						error: null,
+					});
+					// Use the location here
+				});
+			this.getWeather();
+		}
 	}
 
-	// getLocation(){
-	// 	Geolocation.getCurrentPosition(info => console.log(info));
-	// 	// Get the current position of the user
-	// 	navigator.geolocation.getCurrentPosition(
-	// 		(position) => {
-	// 			this.setState(
-	// 				(prevState) => ({
-	// 				latitude: position.coords.latitude,
-	// 				longitude: position.coords.longitude
-	// 				}), () => { this.getWeather(); }
-	// 			);
-	// 		},
-	// 		(error) => this.setState({ forecast: error.message }),
-	// 		{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
-	// 	);
-	// }
-	
 	processData(data){
 		if (data.cod == 404){
 			let message = data.message.replace(/^\w/, c => c.toUpperCase());
